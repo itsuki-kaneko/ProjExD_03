@@ -89,6 +89,7 @@ class Bird:
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
+            
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
@@ -133,7 +134,14 @@ class Bomb:
 
 
 class Beam:
+    """
+    ビームに関するクラス
+    """
     def __init__(self, bird: Bird):
+        """
+        ビーム画像を生成する
+        引数bird:こうかとんに関する情報
+        """
         self.img = pg.image.load(f"{MAIN_DIR}/fig/beam.png")
         self.rct = self.img.get_rect()
         self.vx, self.vy = bird.dire
@@ -142,7 +150,6 @@ class Beam:
         atan = math.atan2(-self.vy, self.vx)
         deg = math.degrees(atan)
         self.img = pg.transform.rotozoom(self.img, deg, 1.0)
-
         
     def update(self, screen: pg.Surface):
         """
@@ -154,19 +161,36 @@ class Beam:
 
 
 class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
     def __init__(self, bomb: Bomb):
+        """
+        爆発エフェクトを生成する
+        引数bomb:爆弾の消滅位置
+        """
         exp = pg.image.load(f"{MAIN_DIR}/fig/explosion.gif")
         self.exps = [pg.transform.rotozoom(exp, 90.0*i, 1.0) for i in range(4)]  # 角度の違う画像を4つ格納
         self.dirx, self.diry = bomb.rct.centerx, bomb.rct.centery
         self.life = 4
 
     def update(self, screen: pg.Surface):
+        """
+        爆発エフェクトを表示する
+        引数 screen：画面Surface
+        """
         self.life = self.life-1
         screen.blit(self.exps[self.life], (self.dirx, self.diry))
 
 
 class Score:
+    """
+    スコアに関するクラス
+    """
     def __init__(self):
+        """
+        スコアをhgp創英角ﾎﾟｯﾌﾟ体で生成する
+        """
         self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
         self.color = (0, 0, 255)
         self.score = 0
@@ -175,11 +199,18 @@ class Score:
         self.rct.centerx, self.rct.centery = 100, HEIGHT-50
 
     def update(self, screen: pg.Surface):
+        """
+        スコアを表示する
+        引数screen:画面Surface
+        """
         scr = self.font.render(f"スコア:{self.score}", 0, self.color)
         screen.blit(scr, self.rct)
 
 
 def main():
+    """
+    メインの処理をする関数
+    """
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
@@ -211,14 +242,15 @@ def main():
         
         for i, bomb in enumerate(bombs):
             for j, beam in enumerate(mbeam):
-                if beam is None:  # beamがNoneなら、以降のループを飛ばす(バグ防止)
-                    break
+                if beam is None:  # beamがNoneなら、以降の処理を飛ばす(バグ防止)
+                    continue
                 if beam.rct.colliderect(bomb.rct):  # 爆弾とビームがぶつかったら
                     bombs[i] = None
                     mbeam[j] = None
                     score.score += 1  # スコア+1
                     exp.append(Explosion(bomb))
                     bird.change_img(6, screen)
+
         bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでない爆弾だけのリスト
         exp = [e for e in exp if e.life > 0]  # lifeが0より大きいexpだけをリスト化
         mbeam = [m for m in mbeam if m is not None and(0<m.rct.centerx<WIDTH and 0<m.rct.centery<HEIGHT) ]
