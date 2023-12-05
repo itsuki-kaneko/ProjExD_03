@@ -146,6 +146,16 @@ class Beam:
         screen.blit(self.img, self.rct)
 
 
+class Explosion:
+    def __init__(self, bomb: Bomb):
+        exp = pg.image.load(f"{MAIN_DIR}/fig/explosion.gif")
+        self.exps = [pg.transform.rotozoom(exp, 90.0*i, 1.0) for i in range(4)]  # 角度の違う画像を4つ格納
+        self.dirx, self.diry = bomb.rct.centerx, bomb.rct.centery
+        self.life = 4
+
+    def update(self, screen: pg.Surface):
+        self.life = self.life-1
+        screen.blit(self.exps[self.life], (self.dirx, self.diry))
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
@@ -154,6 +164,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]  # NUM_OF_BOMBS個のBombインスタンス
     beam = None
+    exp = []
 
     clock = pg.time.Clock()
     tmr = 0
@@ -175,11 +186,13 @@ def main():
                 return
         
         for i, bomb in enumerate(bombs):
-            if beam is not None and beam.rct.colliderect(bomb.rct):
+            if beam is not None and beam.rct.colliderect(bomb.rct):  # 爆弾とビームがぶつかったら
                 bombs[i] = None
                 beam = None
+                exp.append(Explosion(bomb))
                 bird.change_img(6, screen)
         bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでない爆弾だけのリスト
+        exp = [e for e in exp if e.life > 0]  # lifeが0より大きいexpだけをリスト化
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -187,6 +200,9 @@ def main():
             bomb.update(screen)
         if beam is not None:
             beam.update(screen)
+        if exp:  # もしexpに中身があれば
+            for e in exp:
+                e.update(screen)  # expの中身をupdate
         pg.display.update()
         tmr += 1
         clock.tick(50)
