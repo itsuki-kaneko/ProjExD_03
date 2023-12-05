@@ -207,6 +207,27 @@ class Score:
         screen.blit(scr, self.rct)
 
 
+class Game_Over:
+    """
+    ゲームオーバーに関するクラス
+    """
+    def __init__(self):
+        """
+        ゲームオーバー文字列を生成する
+        """
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 200)
+        self.color = (255, 0, 0)
+        self.img = self.font.render(f"GAME OVER", 0, self.color)
+        self.rct = self.img.get_rect()
+        self.rct.centerx, self.rct.centery = WIDTH/2, HEIGHT/2
+
+    def update(self, screen: pg.Surface):
+        """
+        ゲームオーバー文字列を表示する
+        """
+        go = self.font.render(f"GAME OVER", 0, self.color)
+        screen.blit(go, self.rct)
+
 def main():
     """
     メインの処理をする関数
@@ -236,6 +257,8 @@ def main():
             if bird.rct.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
+                gameover = Game_Over()
+                gameover.update(screen)
                 pg.display.update()
                 time.sleep(1)
                 return
