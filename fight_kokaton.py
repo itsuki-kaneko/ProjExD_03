@@ -2,6 +2,7 @@ import os
 import random
 import sys
 import time
+import math
 
 import pygame as pg
 
@@ -66,6 +67,7 @@ class Bird:
         self.img = self.imgs[(+5, 0)]  # 右向きこうかとんをデフォルトにする
         self.rct = self.img.get_rect()
         self.rct.center = xy
+        self.dire = [+5,0]  # 方向タプル用
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -92,6 +94,7 @@ class Bird:
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not(sum_mv[0]==0 and sum_mv[1]==0):  # 何かキーが押されていたら
             self.img = self.imgs[tuple(sum_mv)]
+            self.dire = sum_mv
         screen.blit(self.img, self.rct)
 
 
@@ -133,9 +136,13 @@ class Beam:
     def __init__(self, bird: Bird):
         self.img = pg.image.load(f"{MAIN_DIR}/fig/beam.png")
         self.rct = self.img.get_rect()
-        self.rct.centerx = bird.rct.centerx + bird.rct.width/2
-        self.rct.centery = bird.rct.centery
-        self.vx, self.vy = +5, 0
+        self.vx, self.vy = bird.dire
+        self.rct.centerx = bird.rct.centerx + bird.rct.width*self.vx/5
+        self.rct.centery = bird.rct.centery + bird.rct.height*self.vy/5
+        atan = math.atan2(-self.vy, self.vx)
+        deg = math.degrees(atan)
+        self.img = pg.transform.rotozoom(self.img, deg, 1.0)
+
         
     def update(self, screen: pg.Surface):
         """
@@ -181,7 +188,7 @@ def main():
     # beam = None
     exp = list()  # Explosionインスタンス格納用
     score = Score()  # Scoreインスタンス生成
-    mbeam = list()  # Beamインスタンス格納
+    mbeam = list()  # Beamインスタンス格納用
 
     clock = pg.time.Clock()
     tmr = 0
@@ -190,7 +197,7 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:  # キーが押されたら
-                mbeam.append(Beam(bird))
+                mbeam.append(Beam(bird))  # Beamインスタンスを格納
         
         screen.blit(bg_img, [0, 0])
         
@@ -204,7 +211,7 @@ def main():
         
         for i, bomb in enumerate(bombs):
             for j, beam in enumerate(mbeam):
-                if beam is None:
+                if beam is None:  # beamがNoneなら、以降のループを飛ばす(バグ防止)
                     break
                 if beam.rct.colliderect(bomb.rct):  # 爆弾とビームがぶつかったら
                     bombs[i] = None
@@ -220,7 +227,7 @@ def main():
         bird.update(key_lst, screen)
         for bomb in bombs:
             bomb.update(screen)
-        if mbeam:
+        if mbeam:  # もしmbeamに中身があれば
             for beam in mbeam:
                 beam.update(screen)
         if exp:  # もしexpに中身があれば
