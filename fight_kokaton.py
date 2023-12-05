@@ -178,9 +178,10 @@ def main():
     bg_img = pg.image.load(f"{MAIN_DIR}/fig/pg_bg.jpg")
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]  # NUM_OF_BOMBS個のBombインスタンス
-    beam = None
-    exp = []  # Explosionインスタンス格納用
+    # beam = None
+    exp = list()  # Explosionインスタンス格納用
     score = Score()  # Scoreインスタンス生成
+    mbeam = list()  # Beamインスタンス格納
 
     clock = pg.time.Clock()
     tmr = 0
@@ -189,7 +190,7 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:  # キーが押されたら
-                beam = Beam(bird)
+                mbeam.append(Beam(bird))
         
         screen.blit(bg_img, [0, 0])
         
@@ -202,21 +203,26 @@ def main():
                 return
         
         for i, bomb in enumerate(bombs):
-            if beam is not None and beam.rct.colliderect(bomb.rct):  # 爆弾とビームがぶつかったら
-                bombs[i] = None
-                beam = None
-                score.score += 1  # スコア+1
-                exp.append(Explosion(bomb))
-                bird.change_img(6, screen)
+            for j, beam in enumerate(mbeam):
+                if beam is None:
+                    break
+                if beam.rct.colliderect(bomb.rct):  # 爆弾とビームがぶつかったら
+                    bombs[i] = None
+                    mbeam[j] = None
+                    score.score += 1  # スコア+1
+                    exp.append(Explosion(bomb))
+                    bird.change_img(6, screen)
         bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでない爆弾だけのリスト
         exp = [e for e in exp if e.life > 0]  # lifeが0より大きいexpだけをリスト化
+        mbeam = [m for m in mbeam if m is not None and(0<m.rct.centerx<WIDTH and 0<m.rct.centery<HEIGHT) ]
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         for bomb in bombs:
             bomb.update(screen)
-        if beam is not None:
-            beam.update(screen)
+        if mbeam:
+            for beam in mbeam:
+                beam.update(screen)
         if exp:  # もしexpに中身があれば
             for e in exp:
                 e.update(screen)  # expの中身をupdate
